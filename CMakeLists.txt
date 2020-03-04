@@ -13,8 +13,10 @@ target_link_libraries(mb_par m)
 target_link_libraries(mb_par png)
 
 
-# add_executable(aescrack_cuda main.cu)
-# target_compile_definitions(aescrack_cuda PUBLIC VCUDA)
+add_executable(mb_cuda main.cu)
+target_compile_definitions(mb_cuda PUBLIC VCUDA)
+target_link_libraries(mb_cuda m)
+target_link_libraries(mb_cuda png)
 
 add_executable(mb main.c)
 target_link_libraries(mb m)

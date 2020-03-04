@@ -70,13 +70,33 @@ int main (int argn, char **argv) {
     int imwidth, imheight;
     int maxiter;
 
-    assert(argn == 8);
+    char dst[2048];
 
-    sscanf("");
+    assert(argn == 9);
+
+    int argi = 1;
+
+#define getdbl(name) sscanf(argv[argi++], "%lf", &name)
+#define getint(name) sscanf(argv[argi++], "%d", &name)
+
+    getdbl(x0); getdbl(y0); getdbl(width); getdbl(height);
+    getint(imwidth); getint(imheight);
+    sscanf(argv[argi++], "%s", &dst);
+    getint(maxiter);
+
+#ifndef VCUDA
 
     bitmap_t bitmap = mandelbrot(x0, y0, width, height, imwidth, imheight, maxiter, rgb_coloring_1);
 
-    if (save_bitmap_to_png(&bitmap, "out.png")) {
+#else
+
+    pixel_t *output; cudaMalloc(&output, sizeof(pixel_t) * imheight * imwidth);
+
+    bitmap_t bitmap = mkbitmap(imwidth, imheight);
+
+#endif
+
+    if (save_bitmap_to_png(&bitmap, dst)) {
 	    fprintf (stderr, "Error writing file.\n");
 	    status = -1;
     }
@@ -84,5 +104,6 @@ int main (int argn, char **argv) {
     free(bitmap.pixels);
 
     return status;
-}
 
+
+}
