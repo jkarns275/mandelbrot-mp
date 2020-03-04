@@ -72,7 +72,7 @@ int main (int argn, char **argv) {
 
     assert(argn == 8);
 
-    sscanf
+    sscanf("");
 
     bitmap_t bitmap = mandelbrot(x0, y0, width, height, imwidth, imheight, maxiter, rgb_coloring_1);
 
