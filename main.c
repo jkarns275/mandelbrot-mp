@@ -26,6 +26,7 @@ pixel_t gray_coloring(int i, int maxi, double a, double b) {
     return r;
 }
 
+#ifndef VCUDA
 pixel_t interp_pixels(pixel_t p0, double w0, pixel_t p1, double w1) {
     double r, g, b;
     
@@ -58,10 +59,10 @@ pixel_t rgb_coloring_1(int i, int maxi, double a, double b) {
     return interp_palette(palette, 5, i, maxi);
 }
 
+#endif
+
 int main (int argn, char **argv) {
     bitmap_t fruit;
-    int x;
-    int y;
     int status;
 
     status = 0;
@@ -81,21 +82,45 @@ int main (int argn, char **argv) {
 
     getdbl(x0); getdbl(y0); getdbl(width); getdbl(height);
     getint(imwidth); getint(imheight);
-    sscanf(argv[argi++], "%s", &dst);
+    sscanf(argv[argi++], "%s", (char **) &dst);
     getint(maxiter);
-
+    printf("aa\n");
 #ifndef VCUDA
 
     bitmap_t bitmap = mandelbrot(x0, y0, width, height, imwidth, imheight, maxiter, rgb_coloring_1);
 
 #else
+   
+    cudaError_t code = cudaPeekAtLastError();
+
+#define check_for_cuda_err() \
+    if ((code=cudaPeekAtLastError()) != cudaSuccess) { \
+        printf("Encountered cuda error on line %d: \n %s\n", __LINE__, cudaGetErrorString(code)); \
+        exit(-1); \
+    }
 
     pixel_t *output; cudaMalloc(&output, sizeof(pixel_t) * imheight * imwidth);
-
     bitmap_t bitmap = mkbitmap(imwidth, imheight);
+    
+    printf("%p\n", output);
 
+    double pixwidth = width / (double) imwidth;
+    double pixheight = height / (double) imheight;
+
+    mandelbrot<<<(imheight * imwidth) / CHUNK_SIZE, 1024>>>(x0, y0, pixwidth, pixheight, imwidth, imheight, maxiter, output);
+
+    cudaDeviceSynchronize();
+
+    check_for_cuda_err();
+
+    printf("%p\n", output);
+    printf("%p\n", bitmap.pixels);
+    // memcpy(bitmap.pixels, output, sizeof(pixel_t) * imheight * imwidth);
+    cudaMemcpy(bitmap.pixels, output, sizeof(pixel_t) * imheight * imwidth, cudaMemcpyDeviceToHost);
+
+    printf("%p\n", output);
 #endif
-
+    
     if (save_bitmap_to_png(&bitmap, dst)) {
 	    fprintf (stderr, "Error writing file.\n");
 	    status = -1;

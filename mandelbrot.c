@@ -74,15 +74,20 @@ __device__ __host__ pixel_t cuda_coloring(int i, int maxi, double a, double b) {
 #define nobranch_min(x, y) y ^ ((x ^ y) & -(x < y))
 #define nobranch_max(x, y) x ^ ((x ^ y) & -(x < y))
 
-__global__ void mandelbrot(int max_iterations, pixel_t *output) {
+__global__ void mandelbrot( double x0, double y0, double pixwidth, double pixheight,
+                            int imwidth, int imheight,
+                            int max_iterations, pixel_t *output) {
 
-    int64_t row = ((int64_t) blockIdx.x) * ((int64_t) blockDim.x) + ((int64_t) threadIdx.x);
+    int64_t ix = ((int64_t) blockIdx.x) * ((int64_t) blockDim.x) + ((int64_t) threadIdx.x);
     int64_t size = (int64_t) imwidth * (int64_t) imheight;
     int64_t imax = ix * CHUNK_SIZE + CHUNK_SIZE;
     imax = nobranch_min(size, imax);
 
     for (int64_t i = ix * CHUNK_SIZE; i < imax; i++) {
         double a = 0.0, b = 0.0, t;
+        
+        double x = x0 + pixwidth * (i % imwidth);
+        double y = y0 + pixheight * (i / imwidth);       
         
         int iter = 0;
         for (; iter < max_iterations; iter++) {

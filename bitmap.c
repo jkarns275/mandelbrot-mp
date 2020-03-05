@@ -20,7 +20,7 @@ bitmap_t mkbitmap(int width, int height) {
     bitmap_t bitmap;
     bitmap.width = width;
     bitmap.height = height;
-    bitmap.pixels = calloc(width * height, sizeof(pixel_t));
+    bitmap.pixels = (pixel_t *) calloc(width * height, sizeof(pixel_t));
     return bitmap;
 }
 
@@ -94,9 +94,9 @@ static int save_bitmap_to_png(bitmap_t *bitmap, const char *path) {
     
     /* Initialize rows of PNG. */
 
-    row_pointers = png_malloc (png_ptr, bitmap->height * sizeof (png_byte *));
+    row_pointers = (png_byte **) png_malloc (png_ptr, bitmap->height * sizeof (png_byte *));
     for (y = 0; y < bitmap->height; y++) {
-        png_byte *row = 
+        png_byte *row = (png_byte *)
             png_malloc (png_ptr, sizeof (uint8_t) * bitmap->width * pixel_size);
         row_pointers[y] = row;
         for (x = 0; x < bitmap->width; x++) {
